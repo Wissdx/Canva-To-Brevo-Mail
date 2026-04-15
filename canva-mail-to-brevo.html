@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canva ➜ Brevo Cleaner Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 min-h-screen flex items-center justify-center p-4 font-sans text-slate-800">
+
+    <div class="max-w-4xl w-full glass rounded-3xl shadow-2xl p-8 space-y-6">
+        <header class="text-center space-y-2">
+            <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                CANVA ➜ BREVO CLEANER
+            </h1>
+            <p class="text-slate-500 italic">Nettoyage automatique : Liens, Scripts & Commentaires.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <label class="font-bold text-sm uppercase tracking-wider text-slate-400">Code Canva (Sale)</label>
+                <textarea id="input"
+                    class="w-full h-80 p-4 border-2 border-slate-100 rounded-2xl focus:border-purple-400 outline-none transition-all text-xs font-mono"
+                    placeholder="Colle ton export HTML ici..."></textarea>
+            </div>
+
+            <div class="space-y-2">
+                <label class="font-bold text-sm uppercase tracking-wider text-slate-400">Code Brevo (Propre)</label>
+                <textarea id="output" readonly
+                    class="w-full h-80 p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-xs font-mono cursor-not-allowed"
+                    placeholder="Le résultat apparaîtra ici..."></textarea>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4 justify-center items-center">
+            <button onclick="processHTML()"
+                class="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg">
+                NETTOYER LE CODE
+            </button>
+
+            <button id="copyBtn" onclick="copyCode()"
+                class="hidden w-full md:w-auto px-10 py-4 border-2 border-purple-600 text-purple-600 font-bold rounded-full hover:bg-purple-50 transition-all">
+                COPIER LE RÉSULTAT
+            </button>
+        </div>
+
+        <p id="status" class="text-center text-green-500 font-medium h-4"></p>
+    </div>
+
+    <script>
+        function processHTML() {
+            const input = document.getElementById('input').value;
+            if (!input) return;
+
+            let clean = input;
+
+            // 1. Suppression du tag de non-tracking Canva/Amazon SES
+            clean = clean.replace(/ses:no-track=""/g, "");
+
+            // 2. Suppression de TOUTES les balises <script> et leur contenu
+            // La regex gère le multi-ligne et les attributs éventuels dans la balise
+            clean = clean.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gmi, "");
+
+            // 3. Suppression des commentaires vides de Canva qui alourdissent le fichier
+            clean = clean.replace(/\s*/g, "");
+
+            // 4. Nettoyage des lignes vides excessives laissées par les suppressions
+            clean = clean.trim();
+
+            document.getElementById('output').value = clean;
+            document.getElementById('copyBtn').classList.remove('hidden');
+            showStatus("Code nettoyé (Scripts retirés) !");
+        }
+
+        function copyCode() {
+            const output = document.getElementById('output');
+            output.select();
+            document.execCommand('copy');
+            showStatus("Copié dans le presse-papier !");
+        }
+
+        function showStatus(msg) {
+            const status = document.getElementById('status');
+            status.innerText = msg;
+            setTimeout(() => status.innerText = "", 3000);
+        }
+    </script>
+</body>
+
+</html>
