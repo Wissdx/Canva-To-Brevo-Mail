@@ -11,62 +11,48 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
         }
-
-        textarea {
-            scrollbar-width: thin;
-        }
     </style>
 </head>
 
 <body class="bg-slate-900 min-h-screen flex items-center justify-center p-4 font-sans text-slate-800">
 
-    <div class="max-w-5xl w-full glass rounded-3xl shadow-2xl p-8 space-y-6 border border-white/20">
+    <div class="max-w-4xl w-full glass rounded-3xl shadow-2xl p-8 space-y-6">
         <header class="text-center space-y-2">
-            <h1
-                class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 tracking-tight">
-                CANVA ➜ BREVO
+            <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                HTML CLEANER
             </h1>
-            <p class="text-slate-500 font-medium">Nettoyage automatique : Liens SES, Scripts & Scories.</p>
+            <p class="text-slate-500 italic">Retrait de "ses:no-track" & des balises scripts.</p>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
-                <div class="flex justify-between items-center">
-                    <label class="font-bold text-xs uppercase tracking-widest text-slate-400">Code Canva (Sale)
-                        ⁉️</label>
-                    <button onclick="document.getElementById('input').value=''"
-                        class="text-xs text-red-400 hover:text-red-600 transition-colors uppercase font-bold">Vider</button>
-                </div>
+                <label class="font-bold text-sm uppercase tracking-wider text-slate-400">Code HTML Source</label>
                 <textarea id="input"
-                    class="w-full h-[450px] p-4 border-2 border-slate-100 rounded-2xl focus:border-blue-400 outline-none transition-all text-[10px] font-mono shadow-inner"
-                    placeholder="Colle ton export HTML Canva ici..."></textarea>
+                    class="w-full h-80 p-4 border-2 border-slate-100 rounded-2xl focus:border-purple-400 outline-none transition-all text-xs font-mono"
+                    placeholder="Colle ton code HTML ici..."></textarea>
             </div>
 
             <div class="space-y-2">
-                <div class="flex justify-between items-center">
-                    <label class="font-bold text-xs uppercase tracking-widest text-slate-400">Code Brevo (Propre)
-                        ✅</label>
-                    <span id="charCount" class="text-[10px] text-slate-400 font-mono"></span>
-                </div>
+                <label class="font-bold text-sm uppercase tracking-wider text-slate-400">Code Nettoyé</label>
                 <textarea id="output" readonly
-                    class="w-full h-[450px] p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-[10px] font-mono cursor-default shadow-inner"
+                    class="w-full h-80 p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-xs font-mono cursor-not-allowed"
                     placeholder="Le résultat apparaîtra ici..."></textarea>
             </div>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-4 justify-center items-center pt-4">
+        <div class="flex flex-col md:flex-row gap-4 justify-center items-center">
             <button onclick="processHTML()"
-                class="w-full md:w-auto px-12 py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-blue-500/20 uppercase tracking-widest">
-                Nettoyer le code
+                class="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg">
+                NETTOYER LE CODE
             </button>
 
             <button id="copyBtn" onclick="copyCode()"
-                class="hidden w-full md:w-auto px-12 py-5 border-2 border-slate-200 text-slate-600 font-black rounded-2xl hover:bg-slate-50 hover:border-slate-300 transition-all uppercase tracking-widest">
-                Copier le résultat
+                class="hidden w-full md:w-auto px-10 py-4 border-2 border-purple-600 text-purple-600 font-bold rounded-full hover:bg-purple-50 transition-all">
+                COPIER LE RÉSULTAT
             </button>
         </div>
 
-        <p id="status" class="text-center text-sm font-bold text-emerald-500 h-6"></p>
+        <p id="status" class="text-center text-green-500 font-medium h-4"></p>
     </div>
 
     <script>
@@ -74,42 +60,28 @@
             const input = document.getElementById('input').value;
             if (!input) return;
 
-            let clean = input;
-
             // 1. Suppression du tag de non-tracking Canva/Amazon SES
-            clean = clean.replace(/ses:no-track=""/g, "");
+            let clean = input.replace(/ses:no-track=""/g, "");
 
             // 2. Suppression de TOUTES les balises <script> et leur contenu
-            // On utilise une regex robuste pour le contenu entre balises
             clean = clean.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gmi, "");
-
-            // 3. Suppression des commentaires vides ou inutiles de Canva
-            // On ne touche PAS à \s* (whitespace) globalement ici
-            clean = clean.replace(/\s*/g, "");
-
-            // 4. Nettoyage final
-            clean = clean.trim();
 
             document.getElementById('output').value = clean;
             document.getElementById('copyBtn').classList.remove('hidden');
-
-            // Stats
-            const diff = input.length - clean.length;
-            document.getElementById('charCount').innerText = `${diff} caractères supprimés`;
-            showStatus("✨ Code purifié et prêt pour Brevo !");
+            showStatus("Code nettoyé (Scripts & No-track retirés) !");
         }
 
         function copyCode() {
             const output = document.getElementById('output');
             output.select();
-            navigator.clipboard.writeText(output.value);
-            showStatus("📋 Copié dans le presse-papier !");
+            document.execCommand('copy');
+            showStatus("Copié dans le presse-papier !");
         }
 
         function showStatus(msg) {
             const status = document.getElementById('status');
             status.innerText = msg;
-            setTimeout(() => status.innerText = "", 4000);
+            setTimeout(() => status.innerText = "", 3000);
         }
     </script>
 </body>
