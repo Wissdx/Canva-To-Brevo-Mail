@@ -4,42 +4,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canva ➜ Brevo Ultra Cleaner</title>
+    <title>Canva ➜ Brevo Email Optimizer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .glass {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
         }
+
+        textarea {
+            scrollbar-width: thin;
+        }
     </style>
 </head>
 
 <body class="bg-slate-900 min-h-screen flex items-center justify-center p-4 font-sans text-slate-800">
 
-    <div class="max-w-5xl w-full glass rounded-3xl shadow-2xl p-8 space-y-6">
+    <div class="max-w-6xl w-full glass rounded-3xl shadow-2xl p-8 space-y-6">
         <header class="text-center">
             <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                BREVO CLEANER PRO
+                EMAIL CLEANER (BREVO -> CANVA)
             </h1>
-            <p class="text-slate-500 italic">Correction des liens, des scripts et des marges mobiles.</p>
+            <p class="text-slate-500 italic">Nettoyage complet (liens tracking, script js, etc) & Minification
+                (Objectif
+                < 102ko).</p>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <textarea id="input"
-                class="w-full h-96 p-4 border-2 border-slate-100 rounded-2xl text-[10px] font-mono outline-none focus:border-purple-400"
-                placeholder="Colle le code Canva ici..."></textarea>
-            <textarea id="output" readonly
-                class="w-full h-96 p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-[10px] font-mono"
-                placeholder="Le code optimisé apparaîtra ici..."></textarea>
+            <div class="space-y-2">
+                <label class="font-bold text-xs uppercase text-slate-400">Code Canva (Lourd)</label>
+                <textarea id="input"
+                    class="w-full h-96 p-4 border-2 border-slate-100 rounded-2xl text-[10px] font-mono outline-none focus:border-purple-400"
+                    placeholder="Colle le code Canva ici..."></textarea>
+            </div>
+            <div class="space-y-2">
+                <label class="font-bold text-xs uppercase text-slate-400">Code Brevo (Optimisé)</label>
+                <textarea id="output" readonly
+                    class="w-full h-96 p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-[10px] font-mono"
+                    placeholder="Le code compressé apparaîtra ici..."></textarea>
+            </div>
         </div>
 
-        <div class="flex gap-4 justify-center">
+        <div class="flex flex-col items-center gap-4">
             <button onclick="processHTML()"
-                class="px-8 py-4 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition-all shadow-lg uppercase tracking-widest text-sm">
-                NETTOYER LE CODE
+                class="px-10 py-4 bg-blue-600 text-white font-bold rounded-full hover:scale-105 transition-all shadow-lg">
+                OPTIMISER ET ALLÉGER
             </button>
+            <div id="stats" class="text-sm font-mono text-slate-500 hidden">
+                Poids : <span id="oldSize">0</span> ko ➜ <span id="newSize" class="text-emerald-600 font-bold">0</span>
+                ko
+            </div>
             <button id="copyBtn" onclick="copyCode()"
-                class="hidden px-8 py-4 border-2 border-blue-600 text-blue-600 font-bold rounded-full hover:bg-blue-50 transition-all uppercase tracking-widest text-sm">
+                class="hidden px-8 py-3 border-2 border-blue-600 text-blue-600 font-bold rounded-full transition-all">
                 COPIER LE RÉSULTAT
             </button>
         </div>
@@ -48,42 +64,63 @@
 
     <script>
         function processHTML() {
-            let clean = document.getElementById('input').value;
-            if (!clean) return;
+            const rawInput = document.getElementById('input').value;
+            if (!rawInput) return;
 
-            // 1. Suppression du tag de non-tracking Canva (pour faire marcher les liens)
-            clean = clean.replace(/ses:no-track=""/g, "");
+            let clean = rawInput;
+
+            // 1. Suppression des balises <link rel="preload"> (Gain de poids énorme)
+            clean = clean.replace(/<link rel="preload"[^>]*>/gmi, "");
 
             // 2. Suppression des balises <script>
             clean = clean.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gmi, "");
 
-            // 3. FIX DES MARGES (L'étape qui te manque)
-            // On retire 'pre-wrap' et 'justify' qui forcent le texte contre les bords sur mobile
+            // 3. Fix des liens et styles Canva
+            clean = clean.replace(/ses:no-track=""/g, "");
             clean = clean.replace(/white-space:\s?pre-wrap;?/gi, "");
             clean = clean.replace(/text-align:\s?justify;?/gi, "text-align:left;");
-
-            // 4. FIX COMPATIBILITÉ PADDING
-            // On transforme padding: 0px 20px en padding-left/right pour une meilleure lecture par Brevo
             clean = clean.replace(/padding:\s?0px 20px;?/gi, "padding-left:20px; padding-right:20px;");
 
-            // 5. Nettoyage des commentaires vides Canva
-            clean = clean.replace(/\s*/g, "");
+            // 4. Suppression des commentaires HTML (sauf IF MSO pour Outlook)
+            // Utilisation d'une regex qui évite le conflit avec le // du JS
+            const commentRegex = new RegExp('', 'g');
+            clean = clean.replace(commentRegex, "");
 
-            document.getElementById('output').value = clean.trim();
+            // 5. Minification (On vire les retours à la ligne et les espaces entre balises)
+            clean = clean.replace(/>\s+</g, "><");
+            clean = clean.replace(/\s{2,}/g, " ");
+
+            const finalCode = clean.trim();
+            document.getElementById('output').value = finalCode;
+
+            // Stats
+            const oldKb = (rawInput.length / 1024).toFixed(2);
+            const newKb = (finalCode.length / 1024).toFixed(2);
+            document.getElementById('oldSize').innerText = oldKb;
+            document.getElementById('newSize').innerText = newKb;
+            document.getElementById('stats').classList.remove('hidden');
+
             document.getElementById('copyBtn').classList.remove('hidden');
-            showStatus("✨ Code optimisé : Liens & Marges réparés !");
+            showStatus(newKb > 102 ? "⚠️ Attention : Toujours > 102ko" : "✅ Prêt pour Gmail !");
         }
 
         async function copyCode() {
             const output = document.getElementById('output').value;
-            await navigator.clipboard.writeText(output);
-            showStatus("📋 Copié dans le presse-papier !");
+            try {
+                await navigator.clipboard.writeText(output);
+                showStatus("📋 Copié !");
+            } catch (err) {
+                const textArea = document.getElementById('output');
+                textArea.select();
+                document.execCommand('copy');
+                showStatus("📋 Copié !");
+            }
         }
 
         function showStatus(msg) {
             const status = document.getElementById('status');
             status.innerText = msg;
-            setTimeout(() => status.innerText = "", 3000);
+            setTimeout(() => status.innerText = "", 4000);
         }
     </script>
 </body>
