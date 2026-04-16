@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canva ➜ Brevo Cleaner Pro</title>
+    <title>Canva ➜ Brevo Ultra Cleaner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .glass {
@@ -16,66 +16,73 @@
 
 <body class="bg-slate-900 min-h-screen flex items-center justify-center p-4 font-sans text-slate-800">
 
-    <div class="max-w-4xl w-full glass rounded-3xl shadow-2xl p-8 space-y-6">
-        <header class="text-center space-y-2">
+    <div class="max-w-5xl w-full glass rounded-3xl shadow-2xl p-8 space-y-6">
+        <header class="text-center">
             <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                HTML CLEANER
+                BREVO CLEANER PRO
             </h1>
-            <p class="text-slate-500 italic">Retrait de "ses:no-track" & des balises scripts.</p>
+            <p class="text-slate-500 italic">Nettoyage SES, Scripts, Unités CSS et Balises Preload.</p>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2">
-                <label class="font-bold text-sm uppercase tracking-wider text-slate-400">Code HTML Source</label>
-                <textarea id="input"
-                    class="w-full h-80 p-4 border-2 border-slate-100 rounded-2xl focus:border-purple-400 outline-none transition-all text-xs font-mono"
-                    placeholder="Colle ton code HTML ici..."></textarea>
-            </div>
-
-            <div class="space-y-2">
-                <label class="font-bold text-sm uppercase tracking-wider text-slate-400">Code Nettoyé</label>
-                <textarea id="output" readonly
-                    class="w-full h-80 p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-xs font-mono cursor-not-allowed"
-                    placeholder="Le résultat apparaîtra ici..."></textarea>
-            </div>
+            <textarea id="input"
+                class="w-full h-96 p-4 border-2 border-slate-100 rounded-2xl text-xs font-mono outline-none focus:border-purple-400"
+                placeholder="Colle le code Canva ici..."></textarea>
+            <textarea id="output" readonly
+                class="w-full h-96 p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-xs font-mono"
+                placeholder="Code prêt pour Brevo..."></textarea>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-4 justify-center items-center">
+        <div class="flex gap-4 justify-center">
             <button onclick="processHTML()"
-                class="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg">
+                class="px-8 py-4 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition-all">
                 NETTOYER LE CODE
             </button>
-
             <button id="copyBtn" onclick="copyCode()"
-                class="hidden w-full md:w-auto px-10 py-4 border-2 border-purple-600 text-purple-600 font-bold rounded-full hover:bg-purple-50 transition-all">
+                class="hidden px-8 py-4 border-2 border-blue-600 text-blue-600 font-bold rounded-full hover:bg-blue-50 transition-all">
                 COPIER LE RÉSULTAT
             </button>
         </div>
-
-        <p id="status" class="text-center text-green-500 font-medium h-4"></p>
+        <p id="status" class="text-center text-green-600 font-bold h-4"></p>
     </div>
 
     <script>
         function processHTML() {
-            const input = document.getElementById('input').value;
-            if (!input) return;
+            let clean = document.getElementById('input').value;
+            if (!clean) return;
 
-            // 1. Suppression du tag de non-tracking Canva/Amazon SES
-            let clean = input.replace(/ses:no-track=""/g, "");
+            // 1. Suppression du tag de non-tracking Canva
+            clean = clean.replace(/ses:no-track=""/g, "");
 
-            // 2. Suppression de TOUTES les balises <script> et leur contenu
+            // 2. Suppression des balises <script> (Cloudflare/Canva)
             clean = clean.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gmi, "");
 
-            document.getElementById('output').value = clean;
+            // 3. Suppression des balises <link rel="preload"> (inutiles et suspectes pour le spam)
+            clean = clean.replace(/<link rel="preload"[^>]*>/gmi, "");
+
+            // 4. Correction du CSS : Ajout des 'px' manquants (ex: padding:20 0 -> 20px 0px)
+            // Cette regex cherche les nombres isolés dans les styles pour ajouter px
+            clean = clean.replace(/:(?!\/\/)([0-9]+)\s+([0-9]+)(?=[;"])/g, ":$1px $2px");
+            clean = clean.replace(/:(?!\/\/)([0-9]+)(?=[;"])/g, ":$1px");
+            // Nettoyage des erreurs potentielles sur les zéros
+            clean = clean.replace(/0px/g, "0");
+
+            // 5. Sécurité : Remplacement de http par https pour ton domaine sbd.fr
+            clean = clean.replace(/href="http:\/\/sbd\.fr/g, 'href="https://sbd.fr');
+
+            // 6. Fix structurel : On s'assure que les liens autour des tables sont bien en display:block
+            clean = clean.replace(/<a\s+([^>]*style=")/gi, '<a $1display:block !important; ');
+
+            document.getElementById('output').value = clean.trim();
             document.getElementById('copyBtn').classList.remove('hidden');
-            showStatus("Code nettoyé (Scripts & No-track retirés) !");
+            showStatus("Code optimisé pour Brevo !");
         }
 
         function copyCode() {
             const output = document.getElementById('output');
             output.select();
             document.execCommand('copy');
-            showStatus("Copié dans le presse-papier !");
+            showStatus("Copié !");
         }
 
         function showStatus(msg) {
