@@ -87,11 +87,6 @@
 
             document.getElementById('output').value = clean.trim();
             document.getElementById('copyBtn').classList.remove('hidden');
-            const oldKb = (rawInput.length / 1024).toFixed(2);
-            const newKb = (clean.length / 1024).toFixed(2);
-            document.getElementById('oldSize').innerText = oldKb;
-            document.getElementById('newSize').innerText = newKb;
-            document.getElementById('stats').classList.remove('hidden');
 
             showStatus("✅ Liens et styles réparés !");
         }
